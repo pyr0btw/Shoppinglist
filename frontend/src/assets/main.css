@@ -1,11 +1,15 @@
 :root {
-  --farbe-primaer: #2e7d32;
-  --farbe-gefahr: #c62828;
+  --farbe-primaer: #76B900;     /* HTW Grün */
+  --farbe-blau: #0082D1;        /* HTW Blau */
+  --farbe-orange: #FF5F00;      /* HTW Orange */
+  --farbe-grau: #AFAFAF;        /* HTW Grau */
+
   --hintergrund: #f5f6f4;
   --karte: #ffffff;
-  --text: #1f2421;
+  --text: #000;
   --gedimmt: #6b726d;
   --rand: #dde1dc;
+
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   color: var(--text);
   background: var(--hintergrund);
@@ -21,6 +25,8 @@ a { color: inherit; text-decoration: none; }
 .logo { color: white; font-weight: 700; font-size: 1.15rem; }
 .inhalt { max-width: 640px; margin: 0 auto; padding: 1rem; }
 .zurueck { color: var(--gedimmt); font-size: 0.9rem; }
+.zurueck:hover { color: #FF5F00; cursor: pointer; }
+
 .gedimmt { color: var(--gedimmt); font-size: 0.9rem; font-weight: normal; }
 
 input, textarea, button { font: inherit; }
@@ -37,6 +43,8 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .zeile { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
 .titelzeile { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
 .aktionen { display: flex; gap: 0.5rem; justify-content: flex-end; }
+.aktionen button:hover { background: #76B900; color: white; cursor: pointer; }
+
 
 .menue { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
 .menue-kachel {
