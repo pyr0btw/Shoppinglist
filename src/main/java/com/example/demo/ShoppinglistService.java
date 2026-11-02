@@ -7,22 +7,19 @@ import java.util.List;
 @Service
 public class ShoppinglistService {
 
-	// Noch keine Datenbank: Jede angemeldete Person bekommt dieselben Beispiellisten als eigene Listen.
+	private final ShoppinglistRepository repository;
+
+	public ShoppinglistService(ShoppinglistRepository repository) {
+		this.repository = repository;
+	}
+
+	// Nur die Listen der angemeldeten Person
 	public List<Shoppinglist> getAllFor(String owner) {
-		return List.of(
-				new Shoppinglist(1, "Sommerfest", owner, List.of(
-						new ShoppinglistEntry(1, "Limonade", 6, "Rewe", "Zitrone", false),
-						new ShoppinglistEntry(2, "Wassermelone", 1, "Aldi", "", true),
-						new ShoppinglistEntry(3, "Nudelsalat", 2, "Rewe", "Mit Pesto", false),
-						new ShoppinglistEntry(4, "Baguette", 3, "Bäckerei", "", false),
-						new ShoppinglistEntry(5, "Pappteller", 1, "", "", false))),
-				new Shoppinglist(2, "Frühstück", owner, List.of(
-						new ShoppinglistEntry(6, "Haferflocken", 1, "Aldi", "Kernig", false),
-						new ShoppinglistEntry(7, "Honig", 1, "Wochenmarkt", "", false),
-						new ShoppinglistEntry(8, "Kaffee", 2, "", "", false))),
-				new Shoppinglist(3, "Haushalt", owner, List.of(
-						new ShoppinglistEntry(9, "Spülmittel", 1, "dm", "", false),
-						new ShoppinglistEntry(10, "Küchenrolle", 2, "dm", "", false))));
+		return repository.findByOwnerOrderByIdAsc(owner);
+	}
+
+	public Shoppinglist create(String name, String owner) {
+		return repository.save(new Shoppinglist(name.trim(), owner));
 	}
 
 }

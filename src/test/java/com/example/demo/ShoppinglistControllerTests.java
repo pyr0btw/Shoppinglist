@@ -8,6 +8,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -26,9 +27,28 @@ class ShoppinglistControllerTests {
 
 	@Test
 	void mitTokenKommenDieListenDerPerson() throws Exception {
+		mockMvc.perform(post("/shoppinglists").with(jwt().jwt(token -> token.subject("timo@example.com")))
+						.contentType("application/json").content("{\"name\": \"Wocheneinkauf\"}"))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.id").isNumber())
+				.andExpect(jsonPath("$.owner").value("timo@example.com"));
+
 		mockMvc.perform(get("/shoppinglists").with(jwt().jwt(token -> token.subject("timo@example.com"))))
 				.andExpect(status().isOk())
+				.andExpect(jsonPath("$[0].name").value("Wocheneinkauf"))
 				.andExpect(jsonPath("$[0].owner").value("timo@example.com"));
+
+		// Andere Personen sehen die Liste nicht
+		mockMvc.perform(get("/shoppinglists").with(jwt().jwt(token -> token.subject("anna@example.com"))))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.length()").value(0));
+	}
+
+	@Test
+	void listeOhneNameWirdAbgelehnt() throws Exception {
+		mockMvc.perform(post("/shoppinglists").with(jwt().jwt(token -> token.subject("timo@example.com")))
+						.contentType("application/json").content("{\"name\": \" \"}"))
+				.andExpect(status().isBadRequest());
 	}
 
 	@Test
