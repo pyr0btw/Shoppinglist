@@ -28,6 +28,18 @@ public class ShoppinglistService {
 	}
 
 	@Transactional
+	public Shoppinglist rename(Long listeId, String owner, String name) {
+		Shoppinglist liste = findeEigeneListe(listeId, owner);
+		liste.setName(name.trim()); // wird am Ende der Transaktion automatisch gespeichert
+		return liste;
+	}
+
+	@Transactional
+	public void delete(Long listeId, String owner) {
+		repository.delete(findeEigeneListe(listeId, owner)); // löscht die Produkte mit (cascade)
+	}
+
+	@Transactional
 	public ShoppinglistEntry addProdukt(Long listeId, String owner, NeuesProdukt neu) {
 		Shoppinglist liste = findeEigeneListe(listeId, owner);
 		ShoppinglistEntry produkt = new ShoppinglistEntry(neu.name().trim(), neu.menge(),

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,6 +37,18 @@ public class ShoppinglistController {
 	@ResponseStatus(HttpStatus.CREATED)
 	public Shoppinglist createList(@Valid @RequestBody NeueListe neueListe, @AuthenticationPrincipal Jwt jwt) {
 		return service.create(neueListe.name(), jwt.getSubject());
+	}
+
+	// Umbenennen, Body wie beim Anlegen: { "name": "Neuer Name" }
+	@PutMapping("/shoppinglists/{id}")
+	public Shoppinglist renameList(@PathVariable Long id, @Valid @RequestBody NeueListe liste, @AuthenticationPrincipal Jwt jwt) {
+		return service.rename(id, jwt.getSubject(), liste.name());
+	}
+
+	@DeleteMapping("/shoppinglists/{id}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void deleteList(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+		service.delete(id, jwt.getSubject());
 	}
 
 	@PostMapping("/shoppinglists/{id}/produkte")

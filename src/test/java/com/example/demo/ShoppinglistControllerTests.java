@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -103,6 +104,38 @@ class ShoppinglistControllerTests {
 
 		mockMvc.perform(get("/shoppinglists").with(als("lena@example.com")))
 				.andExpect(jsonPath("$[0].produkte.length()").value(0));
+	}
+
+	@Test
+	void listeWirdUmbenanntUndGeloescht() throws Exception {
+		String liste = mockMvc.perform(post("/shoppinglists").with(als("max@example.com"))
+						.contentType("application/json").content("{\"name\": \"Party\"}"))
+				.andReturn().getResponse().getContentAsString();
+		long listeId = idAus(liste);
+		mockMvc.perform(post("/shoppinglists/" + listeId + "/produkte").with(als("max@example.com"))
+						.contentType("application/json").content("{\"name\": \"Chips\", \"menge\": 3}"))
+				.andExpect(status().isCreated());
+
+		mockMvc.perform(put("/shoppinglists/" + listeId).with(als("max@example.com"))
+						.contentType("application/json").content("{\"name\": \"Geburtstag\"}"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.name").value("Geburtstag"));
+
+		// Fremde Personen dürfen weder umbenennen noch löschen
+		mockMvc.perform(put("/shoppinglists/" + listeId).with(als("anna@example.com"))
+						.contentType("application/json").content("{\"name\": \"Gehackt\"}"))
+				.andExpect(status().isNotFound());
+		mockMvc.perform(delete("/shoppinglists/" + listeId).with(als("anna@example.com")))
+				.andExpect(status().isNotFound());
+
+		mockMvc.perform(get("/shoppinglists").with(als("max@example.com")))
+				.andExpect(jsonPath("$[0].name").value("Geburtstag"));
+
+		mockMvc.perform(delete("/shoppinglists/" + listeId).with(als("max@example.com")))
+				.andExpect(status().isNoContent());
+
+		mockMvc.perform(get("/shoppinglists").with(als("max@example.com")))
+				.andExpect(jsonPath("$.length()").value(0));
 	}
 
 }
