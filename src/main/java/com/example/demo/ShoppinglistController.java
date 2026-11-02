@@ -4,7 +4,10 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -33,6 +36,25 @@ public class ShoppinglistController {
 	@ResponseStatus(HttpStatus.CREATED)
 	public Shoppinglist createList(@Valid @RequestBody NeueListe neueListe, @AuthenticationPrincipal Jwt jwt) {
 		return service.create(neueListe.name(), jwt.getSubject());
+	}
+
+	@PostMapping("/shoppinglists/{id}/produkte")
+	@ResponseStatus(HttpStatus.CREATED)
+	public ShoppinglistEntry addProdukt(@PathVariable Long id, @Valid @RequestBody NeuesProdukt neuesProdukt,
+			@AuthenticationPrincipal Jwt jwt) {
+		return service.addProdukt(id, jwt.getSubject(), neuesProdukt);
+	}
+
+	@PatchMapping("/shoppinglists/{id}/produkte/{produktId}")
+	public ShoppinglistEntry setErledigt(@PathVariable Long id, @PathVariable Long produktId,
+			@RequestBody ProduktStatus status, @AuthenticationPrincipal Jwt jwt) {
+		return service.setErledigt(id, produktId, jwt.getSubject(), status.erledigt());
+	}
+
+	@DeleteMapping("/shoppinglists/{id}/produkte/{produktId}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void deleteProdukt(@PathVariable Long id, @PathVariable Long produktId, @AuthenticationPrincipal Jwt jwt) {
+		service.deleteProdukt(id, produktId, jwt.getSubject());
 	}
 
 }
