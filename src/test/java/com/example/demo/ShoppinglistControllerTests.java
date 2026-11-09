@@ -138,4 +138,67 @@ class ShoppinglistControllerTests {
 				.andExpect(jsonPath("$.length()").value(0));
 	}
 
+	private String feld(String json, String name) {
+		return JsonMapper.builder().build().readTree(json).get(name).asString();
+	}
+
+	@Test
+	void listeWirdPerEinladungslinkGeteilt() throws Exception {
+		String liste = mockMvc.perform(post("/shoppinglists").with(als("tom@example.com"))
+						.contentType("application/json").content("{\"name\": \"WG-Einkauf\"}"))
+				.andReturn().getResponse().getContentAsString();
+		long listeId = idAus(liste);
+		mockMvc.perform(post("/shoppinglists/" + listeId + "/produkte").with(als("tom@example.com"))
+				.contentType("application/json").content("{\"name\": \"Milch\", \"menge\": 1}"));
+
+		// Nur der Besitzer darf einen Link erzeugen
+		String link = mockMvc.perform(post("/shoppinglists/" + listeId + "/einladung").with(als("tom@example.com")))
+				.andExpect(status().isOk())
+				.andReturn().getResponse().getContentAsString();
+		String token = feld(link, "token");
+		mockMvc.perform(get("/shoppinglists/" + listeId + "/einladung").with(als("tom@example.com")))
+				.andExpect(jsonPath("$.token").value(token));
+
+		// Der Token steht nicht im normalen Listen-JSON
+		mockMvc.perform(get("/shoppinglists").with(als("tom@example.com")))
+				.andExpect(jsonPath("$[0].einladungToken").doesNotExist());
+
+		// Vorschau und Beitreten
+		mockMvc.perform(get("/einladungen/" + token).with(als("pia@example.com")))
+				.andExpect(jsonPath("$.listeName").value("WG-Einkauf"))
+				.andExpect(jsonPath("$.owner").value("tom@example.com"))
+				.andExpect(jsonPath("$.bereitsMitglied").value(false));
+		mockMvc.perform(post("/einladungen/" + token + "/annehmen").with(als("pia@example.com")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.mitglieder[0]").value("pia@example.com"));
+
+		// Pia sieht die Liste genau einmal, mit dem einen Produkt, und kann mitbearbeiten
+		mockMvc.perform(get("/shoppinglists").with(als("pia@example.com")))
+				.andExpect(jsonPath("$.length()").value(1))
+				.andExpect(jsonPath("$[0].produkte.length()").value(1));
+		mockMvc.perform(post("/shoppinglists/" + listeId + "/produkte").with(als("pia@example.com"))
+						.contentType("application/json").content("{\"name\": \"Brot\", \"menge\": 1}"))
+				.andExpect(status().isCreated());
+		mockMvc.perform(get("/shoppinglists").with(als("tom@example.com")))
+				.andExpect(jsonPath("$[0].produkte.length()").value(2));
+
+		// Löschen und Teilen bleiben dem Besitzer vorbehalten
+		mockMvc.perform(delete("/shoppinglists/" + listeId).with(als("pia@example.com")))
+				.andExpect(status().isForbidden());
+		mockMvc.perform(post("/shoppinglists/" + listeId + "/einladung").with(als("pia@example.com")))
+				.andExpect(status().isForbidden());
+
+		// Nach dem Widerrufen funktioniert der Link nicht mehr
+		mockMvc.perform(delete("/shoppinglists/" + listeId + "/einladung").with(als("tom@example.com")))
+				.andExpect(status().isNoContent());
+		mockMvc.perform(post("/einladungen/" + token + "/annehmen").with(als("ben@example.com")))
+				.andExpect(status().isNotFound());
+
+		// Pia verlässt die Liste und sieht sie danach nicht mehr
+		mockMvc.perform(delete("/shoppinglists/" + listeId + "/mitglieder/pia@example.com").with(als("pia@example.com")))
+				.andExpect(status().isNoContent());
+		mockMvc.perform(get("/shoppinglists").with(als("pia@example.com")))
+				.andExpect(jsonPath("$.length()").value(0));
+	}
+
 }

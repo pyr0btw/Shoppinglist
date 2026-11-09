@@ -70,4 +70,38 @@ public class ShoppinglistController {
 		service.deleteProdukt(id, produktId, jwt.getSubject());
 	}
 
+	// Teilen: Der Besitzer erzeugt einen Einladungslink (ein neuer ersetzt den alten)
+	@PostMapping("/shoppinglists/{id}/einladung")
+	public EinladungsLink einladungErstellen(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+		return service.einladungErstellen(id, jwt.getSubject());
+	}
+
+	@GetMapping("/shoppinglists/{id}/einladung")
+	public EinladungsLink einladungLesen(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+		return service.einladungLesen(id, jwt.getSubject());
+	}
+
+	@DeleteMapping("/shoppinglists/{id}/einladung")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void einladungWiderrufen(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+		service.einladungWiderrufen(id, jwt.getSubject());
+	}
+
+	@GetMapping("/einladungen/{token}")
+	public EinladungsInfo einladungAnsehen(@PathVariable String token, @AuthenticationPrincipal Jwt jwt) {
+		return service.einladungAnsehen(token, jwt.getSubject());
+	}
+
+	@PostMapping("/einladungen/{token}/annehmen")
+	public Shoppinglist einladungAnnehmen(@PathVariable String token, @AuthenticationPrincipal Jwt jwt) {
+		return service.einladungAnnehmen(token, jwt.getSubject());
+	}
+
+	// Mitglied entfernen (Besitzer) oder Liste verlassen (Mitglied mit der eigenen Kennung)
+	@DeleteMapping("/shoppinglists/{id}/mitglieder/{person}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void mitgliedEntfernen(@PathVariable Long id, @PathVariable String person, @AuthenticationPrincipal Jwt jwt) {
+		service.mitgliedEntfernen(id, person, jwt.getSubject());
+	}
+
 }
