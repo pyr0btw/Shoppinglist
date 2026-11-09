@@ -14,7 +14,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
-// Alle Routen außer "/" brauchen ein gültiges Okta-Access-Token im Header "Authorization: Bearer ...".
+// Alle Routen außer "/" und "/health" brauchen ein gültiges Okta-Access-Token im Header "Authorization: Bearer ...".
 @Configuration
 public class SecurityConfig {
 
@@ -26,7 +26,7 @@ public class SecurityConfig {
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS-Preflight des Browsers
-						.requestMatchers("/").permitAll()
+						.requestMatchers("/", "/health").permitAll()
 						.anyRequest().authenticated())
 				.oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
 		return http.build();

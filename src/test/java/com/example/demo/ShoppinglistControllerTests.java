@@ -62,6 +62,13 @@ class ShoppinglistControllerTests {
 				.andExpect(status().isOk());
 	}
 
+	@Test
+	void healthEndpunktIstOhneTokenErreichbar() throws Exception {
+		mockMvc.perform(get("/health"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value("ok"));
+	}
+
 	private static RequestPostProcessor als(String person) {
 		return jwt().jwt(token -> token.subject(person));
 	}
