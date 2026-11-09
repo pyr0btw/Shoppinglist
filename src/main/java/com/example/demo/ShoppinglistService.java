@@ -48,8 +48,8 @@ public class ShoppinglistService {
 	@Transactional
 	public ShoppinglistEntry addProdukt(Long listeId, String person, NeuesProdukt neu) {
 		Shoppinglist liste = findeListeMitZugriff(listeId, person);
-		ShoppinglistEntry produkt = new ShoppinglistEntry(neu.name().trim(), neu.menge(),
-				neu.markt() == null ? "" : neu.markt().trim(), neu.notiz() == null ? "" : neu.notiz().trim(), false);
+		ShoppinglistEntry produkt = new ShoppinglistEntry(neu.name().trim(), neu.menge(), ohneNull(neu.markt()),
+				ohneNull(neu.notiz()), false);
 		entryRepository.save(produkt); // vergibt die id
 		liste.getProdukte().add(produkt); // verknüpft das Produkt beim Speichern mit der Liste
 		return produkt;
@@ -59,6 +59,15 @@ public class ShoppinglistService {
 	public ShoppinglistEntry setErledigt(Long listeId, Long produktId, String person, boolean erledigt) {
 		ShoppinglistEntry produkt = findeProdukt(findeListeMitZugriff(listeId, person), produktId);
 		produkt.setErledigt(erledigt); // wird am Ende der Transaktion automatisch gespeichert
+		return produkt;
+	}
+
+	// Besitzer und Mitglieder dürfen Name, Menge, Markt und Notiz ändern; "erledigt" bleibt wie es ist
+	@Transactional
+	public ShoppinglistEntry updateProdukt(Long listeId, Long produktId, String person, NeuesProdukt geaendert) {
+		ShoppinglistEntry produkt = findeProdukt(findeListeMitZugriff(listeId, person), produktId);
+		produkt.bearbeiten(geaendert.name().trim(), geaendert.menge(), ohneNull(geaendert.markt()),
+				ohneNull(geaendert.notiz())); // wird am Ende der Transaktion automatisch gespeichert
 		return produkt;
 	}
 
@@ -139,6 +148,10 @@ public class ShoppinglistService {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Nur der Besitzer darf das");
 		}
 		return liste;
+	}
+
+	private static String ohneNull(String text) {
+		return text == null ? "" : text.trim();
 	}
 
 	private ShoppinglistEntry findeProdukt(Shoppinglist liste, Long produktId) {

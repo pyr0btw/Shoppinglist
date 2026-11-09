@@ -60,4 +60,12 @@ public class ShoppinglistEntry {
 	public void setErledigt(boolean erledigt) {
 		this.erledigt = erledigt;
 	}
+
+	// Nachträgliches Bearbeiten: alles außer dem Erledigt-Status
+	public void bearbeiten(String name, int menge, String markt, String notiz) {
+		this.name = name;
+		this.menge = menge;
+		this.markt = markt;
+		this.notiz = notiz;
+	}
 }

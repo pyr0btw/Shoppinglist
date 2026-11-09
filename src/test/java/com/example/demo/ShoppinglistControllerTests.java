@@ -208,4 +208,59 @@ class ShoppinglistControllerTests {
 				.andExpect(jsonPath("$.length()").value(0));
 	}
 
+	@Test
+	void produktWirdBearbeitetAuchVonMitgliedern() throws Exception {
+		String liste = mockMvc.perform(post("/shoppinglists").with(als("eva@example.com"))
+						.contentType("application/json").content("{\"name\": \"Frühstück\"}"))
+				.andReturn().getResponse().getContentAsString();
+		long listeId = idAus(liste);
+		String produkt = mockMvc.perform(post("/shoppinglists/" + listeId + "/produkte").with(als("eva@example.com"))
+						.contentType("application/json")
+						.content("{\"name\": \"Brötchen\", \"menge\": 4, \"markt\": \"Bäcker\", \"notiz\": \"\"}"))
+				.andReturn().getResponse().getContentAsString();
+		long produktId = idAus(produkt);
+		mockMvc.perform(patch("/shoppinglists/" + listeId + "/produkte/" + produktId).with(als("eva@example.com"))
+				.contentType("application/json").content("{\"erledigt\": true}"));
+
+		// Besitzerin ändert alle Felder, der Erledigt-Status bleibt erhalten
+		mockMvc.perform(put("/shoppinglists/" + listeId + "/produkte/" + produktId).with(als("eva@example.com"))
+						.contentType("application/json")
+						.content("{\"name\": \" Croissants \", \"menge\": 6, \"markt\": \"Rewe\", \"notiz\": \"Butter\"}"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(produktId))
+				.andExpect(jsonPath("$.name").value("Croissants"))
+				.andExpect(jsonPath("$.menge").value(6))
+				.andExpect(jsonPath("$.markt").value("Rewe"))
+				.andExpect(jsonPath("$.notiz").value("Butter"))
+				.andExpect(jsonPath("$.erledigt").value(true));
+
+		// Ungültige Eingaben werden abgelehnt
+		mockMvc.perform(put("/shoppinglists/" + listeId + "/produkte/" + produktId).with(als("eva@example.com"))
+						.contentType("application/json").content("{\"name\": \" \", \"menge\": 1}"))
+				.andExpect(status().isBadRequest());
+		mockMvc.perform(put("/shoppinglists/" + listeId + "/produkte/" + produktId).with(als("eva@example.com"))
+						.contentType("application/json").content("{\"name\": \"Brot\", \"menge\": 0}"))
+				.andExpect(status().isBadRequest());
+
+		// Fremde dürfen nicht bearbeiten
+		mockMvc.perform(put("/shoppinglists/" + listeId + "/produkte/" + produktId).with(als("anna@example.com"))
+						.contentType("application/json").content("{\"name\": \"Gehackt\", \"menge\": 1}"))
+				.andExpect(status().isNotFound());
+
+		// Mitglieder einer geteilten Liste dürfen bearbeiten
+		String link = mockMvc.perform(post("/shoppinglists/" + listeId + "/einladung").with(als("eva@example.com")))
+				.andReturn().getResponse().getContentAsString();
+		mockMvc.perform(post("/einladungen/" + feld(link, "token") + "/annehmen").with(als("jan@example.com")))
+				.andExpect(status().isOk());
+		mockMvc.perform(put("/shoppinglists/" + listeId + "/produkte/" + produktId).with(als("jan@example.com"))
+						.contentType("application/json").content("{\"name\": \"Croissants\", \"menge\": 8}"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.menge").value(8))
+				.andExpect(jsonPath("$.markt").value(""));
+
+		mockMvc.perform(get("/shoppinglists").with(als("eva@example.com")))
+				.andExpect(jsonPath("$[0].produkte[0].name").value("Croissants"))
+				.andExpect(jsonPath("$[0].produkte[0].menge").value(8));
+	}
+
 }

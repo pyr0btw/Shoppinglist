@@ -64,6 +64,13 @@ public class ShoppinglistController {
 		return service.setErledigt(id, produktId, jwt.getSubject(), status.erledigt());
 	}
 
+	// Produkt bearbeiten, Body wie beim Anlegen: { "name": "Milch", "menge": 2, "markt": "Rewe", "notiz": "" }
+	@PutMapping("/shoppinglists/{id}/produkte/{produktId}")
+	public ShoppinglistEntry updateProdukt(@PathVariable Long id, @PathVariable Long produktId,
+			@Valid @RequestBody NeuesProdukt produkt, @AuthenticationPrincipal Jwt jwt) {
+		return service.updateProdukt(id, produktId, jwt.getSubject(), produkt);
+	}
+
 	@DeleteMapping("/shoppinglists/{id}/produkte/{produktId}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void deleteProdukt(@PathVariable Long id, @PathVariable Long produktId, @AuthenticationPrincipal Jwt jwt) {
